@@ -26,6 +26,11 @@
 #include <asm/tlbflush.h>
 #include "internal.h"
 
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+#include <linux/susfs_def.h>
+extern bool susfs_is_inode_sus_path(struct inode *inode);
+#endif
+
 void task_mem(struct seq_file *m, struct mm_struct *mm)
 {
 	unsigned long text, lib, swap, anon, file, shmem;
@@ -357,6 +362,11 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma, int is_pid)
 	dev_t dev = 0;
 	const char *name = NULL;
 
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+	if (file && susfs_is_inode_sus_path(file_inode(file)))
+		return;
+#endif
+
 	if (file) {
 		struct inode *inode = file_inode(vma->vm_file);
 		dev = inode->i_sb->s_dev;
@@ -484,9 +494,9 @@ const struct file_operations proc_tid_maps_operations = {
  * PSS_SHIFT) would be the real byte count.
  *
  * A shift of 12 before division means (assuming 4K page size):
- * 	- 1M 3-user-pages add up to 8KB errors;
- * 	- supports mapcount up to 2^24, or 16M;
- * 	- supports PSS up to 2^52 bytes, or 4PB.
+ * - 1M 3-user-pages add up to 8KB errors;
+ * - supports mapcount up to 2^24, or 16M;
+ * - supports PSS up to 2^52 bytes, or 4PB.
  */
 #define PSS_SHIFT 12
 
@@ -815,6 +825,11 @@ static int show_smap(struct seq_file *m, void *v, int is_pid)
 	int ret = 0;
 	bool rollup_mode;
 	bool last_vma;
+
+	#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+		if (vma->vm_file && susfs_is_inode_sus_path(file_inode(vma->vm_file)))
+			return 0;
+	#endif
 
 	if (priv->rollup) {
 		rollup_mode = true;
@@ -2098,6 +2113,11 @@ static int show_numa_map(struct seq_file *m, void *v, int is_pid)
 	char buffer[64];
 	int nid;
 
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+	if (file && susfs_is_inode_sus_path(file_inode(file)))
+		return 0;
+#endif
+
 	if (!mm)
 		return 0;
 
@@ -2212,6 +2232,7 @@ const struct file_operations proc_pid_numa_maps_operations = {
 	.release	= proc_map_release,
 };
 
+<<<<<<< HEAD
 const struct file_operations proc_tid_numa_maps_operations = {
 	.open		= tid_numa_maps_open,
 	.read		= seq_read,
@@ -2219,3 +2240,6 @@ const struct file_operations proc_tid_numa_maps_operations = {
 	.release	= proc_map_release,
 };
 #endif /* CONFIG_NUMA */
+=======
+#endif /* CONFIG_NUMA */
+>>>>>>> 37c9b09bfa2f (Implement KernelSU-Next v3.1.0 and SUSFS v2.1.0)
