@@ -2231,15 +2231,4 @@ const struct file_operations proc_pid_numa_maps_operations = {
 	.llseek		= seq_lseek,
 	.release	= proc_map_release,
 };
-
-<<<<<<< HEAD
-const struct file_operations proc_tid_numa_maps_operations = {
-	.open		= tid_numa_maps_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= proc_map_release,
-};
 #endif /* CONFIG_NUMA */
-=======
-#endif /* CONFIG_NUMA */
->>>>>>> 37c9b09bfa2f (Implement KernelSU-Next v3.1.0 and SUSFS v2.1.0)

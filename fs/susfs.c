@@ -30,8 +30,8 @@ bool susfs_is_log_enabled __read_mostly = true;
 #define SUSFS_LOGI(fmt, ...) if (READ_ONCE(susfs_is_log_enabled)) pr_info("susfs:[%u][%d][%s] " fmt, current_uid().val, current->pid, __func__, ##__VA_ARGS__)
 #define SUSFS_LOGE(fmt, ...) if (READ_ONCE(susfs_is_log_enabled)) pr_err("susfs:[%u][%d][%s]" fmt, current_uid().val, current->pid, __func__, ##__VA_ARGS__)
 #else
-#define SUSFS_LOGI(fmt, ...) 
-#define SUSFS_LOGE(fmt, ...) 
+#define SUSFS_LOGI(fmt, ...)
+#define SUSFS_LOGE(fmt, ...)
 #endif
 
 bool susfs_starts_with(const char *str, const char *prefix) {
@@ -86,7 +86,7 @@ void susfs_add_sus_path(void __user **user_info) {
 			goto out_path_put_path;
 		}
 		set_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags);
-		SUSFS_LOGI("flagged AS_FLAGS_SUS_PATH on pathname: '%s', fi->nodeid: %llu, fi->inode.i_ino: %lu, fi->inode.i_mapping->flags: 0x%lx\n", 
+		SUSFS_LOGI("flagged AS_FLAGS_SUS_PATH on pathname: '%s', fi->nodeid: %llu, fi->inode.i_ino: %lu, fi->inode.i_mapping->flags: 0x%lx\n",
 					info.target_pathname, fi->nodeid, fi->inode.i_ino, fi->inode.i_mapping->flags);
 		info.err = 0;
 		goto out_path_put_path;
@@ -248,7 +248,7 @@ void susfs_set_hide_sus_mnts_for_non_su_procs(void __user **user_info) {
 		info.err = -EFAULT;
 		goto out_copy_to_user;
 	}
-	
+
 	WRITE_ONCE(susfs_hide_sus_mnts_for_non_su_procs, info.enabled);
 	SUSFS_LOGI("susfs_hide_sus_mnts_for_non_su_procs: %d\n", info.enabled);
 	info.err = 0;
@@ -305,7 +305,7 @@ static int susfs_mark_inode_sus_kstat(char *target_pathname, struct st_susfs_sus
 	new_entry->target_dev = inode->i_sb->s_dev;
 	SUSFS_LOGI("flagged AS_FLAGS_SUS_KSTAT on pathname: '%s', is_fuse: %d, inode->i_sb->s_dev: %u,  inode->i_ino: %lu, inode->i_mapping->flags: 0x%lx\n",
 				target_pathname, new_entry->is_fuse, inode->i_sb->s_dev, inode->i_ino, inode->i_mapping->flags);
-		
+
 out_path_put_path:
 	path_put(&path);
 	return 0;
@@ -478,7 +478,7 @@ void susfs_generic_fillattr_spoofer(struct inode *inode, struct kstat *stat)
 		is_fuse = true;
 		goto out_spoof_kstat;
 	}
-	
+
 	if (!inode->i_mapping) {
 		SUSFS_LOGE("inode->i_mapping is NULL\n");
 		return;
@@ -552,7 +552,7 @@ void susfs_show_map_vma_spoofer(struct inode *inode, dev_t *out_dev, unsigned lo
 		is_fuse = true;
 		goto out_spoof_kstat;
 	}
-	
+
 	if (!inode->i_mapping) {
 		SUSFS_LOGE("inode->i_mapping is NULL\n");
 		return;
@@ -673,7 +673,7 @@ static DEFINE_SEQLOCK(susfs_fake_cmdline_or_bootconfig_seqlock);
 
 void susfs_set_cmdline_or_bootconfig(void __user **user_info) {
 	struct st_susfs_spoof_cmdline_or_bootconfig *info = (struct st_susfs_spoof_cmdline_or_bootconfig *)kzalloc(sizeof(struct st_susfs_spoof_cmdline_or_bootconfig), GFP_KERNEL);
-	
+
 	if (!info) {
 		info->err = -ENOMEM;
 		goto out_copy_to_user;
@@ -1080,6 +1080,8 @@ static int watch_one_dir(struct watch_dir *wd)
  */
 static int susfs_handle_sdcard_inode_event(struct fsnotify_group *group,
                                            struct inode *inode,
+                                           struct fsnotify_mark *inode_mark,
+                                           struct fsnotify_mark *vfsmount_mark,
                                            u32 mask, const void *data, int data_type,
                                            const unsigned char *raw_file_name, u32 cookie,
                                            struct fsnotify_iter_info *iter_info)
@@ -1121,7 +1123,7 @@ static int add_mark_on_inode(struct inode *inode, u32 mask,
 	fsnotify_init_mark(m, g);
 	m->mask = mask;
 
-	if (fsnotify_add_inode_mark(m, inode, 0)) {
+	if (fsnotify_add_mark(m, inode, NULL, 0)) {
 		fsnotify_put_mark(m);
 		return -EINVAL;
 	}
@@ -1183,4 +1185,3 @@ void susfs_init(void) {
 
 /* No module exit is needed becuase it should never be a loadable kernel module */
 //void __init susfs_exit(void)
-

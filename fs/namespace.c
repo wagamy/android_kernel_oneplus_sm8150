@@ -311,7 +311,7 @@ static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name)
 	int res;
 
 	if (mnt) {
-		res = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+	    res = ida_simple_get(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, 0, GFP_KERNEL);
 		if (res < 0) {
 			goto out_free_cache;
 		}
@@ -354,7 +354,7 @@ out_free_devname:
 	kfree_const(mnt->mnt_devname);
 #endif
 out_free_id:
-	ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
+    ida_simple_remove(&susfs_mnt_id_ida, mnt->mnt_id);
 out_free_cache:
 	kmem_cache_free(mnt_cache, mnt);
 	return NULL;
